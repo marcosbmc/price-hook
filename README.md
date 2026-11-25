@@ -2,11 +2,11 @@
 
 Price and availability monitor for **Amazon BR** and **Kabum**, with Discord webhook alerts.
 
-Built as a portfolio-ready full-stack MVP: scraping with a Strategy Pattern, resilient cron checks, price history, and a dark dashboard UI.
+Scraping with a Strategy Pattern, resilient cron checks, price history, and a dark dashboard UI.
+
+**Live Demo:** [price-hook.vercel.app](https://price-hook.vercel.app)
 
 ![PriceHook dashboard](docs/demo-dashboard.png)
-
-> If the image is missing locally, run the app and replace `docs/demo-dashboard.png` with your own screenshot.
 
 ---
 
@@ -119,22 +119,30 @@ npm run db:studio        # browse data
 
 ## Cron + deploy (Vercel)
 
-`vercel.json` schedules hourly checks:
+Price checks run on two schedules:
+
+1. **Vercel Cron** (`vercel.json`) — once per day at 12:00 UTC (`0 12 * * *`), compatible with the free plan limit of 1 cron/day
+2. **GitHub Actions** (`.github/workflows/cron.yml`) — every hour (`0 * * * *`) plus manual `workflow_dispatch`
 
 ```json
 {
-  "crons": [{ "path": "/api/cron/check-prices", "schedule": "0 * * * *" }]
+  "crons": [{ "path": "/api/cron/check-prices", "schedule": "0 12 * * *" }]
 }
 ```
 
+### Deploy steps
+
 1. Deploy to Vercel
-2. Set `DATABASE_URL` and `CRON_SECRET` in project env vars
-3. Vercel Cron will call the route with `Authorization: Bearer <CRON_SECRET>`
+2. Set `DATABASE_URL` and `CRON_SECRET` in Vercel project env vars
+3. In GitHub → **Settings → Secrets and variables → Actions**, add:
+   - `APP_URL` — your deployed URL (e.g. `https://price-hook.vercel.app`)
+   - `CRON_SECRET` — same value used on Vercel
+4. Vercel Cron hits the route once daily; GitHub Actions keeps hourly checks
 
 Manual local test:
 
 ```bash
-curl -X POST http://localhost:3000/api/cron/check-prices ^
+curl -f -X POST http://localhost:3000/api/cron/check-prices \
   -H "Authorization: Bearer YOUR_CRON_SECRET"
 ```
 

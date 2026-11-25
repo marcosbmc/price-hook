@@ -1,0 +1,15 @@
+name: Hourly price check
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger PriceHook cron
+        run: |
+          curl -f -X POST "${{ secrets.APP_URL }}/api/cron/check-prices" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
