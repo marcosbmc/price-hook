@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Store {
+  AMAZON_BR
+  KABUM
+}
+
+model Product {
+  id              String         @id @default(cuid())
+  url             String         @unique
+  store           Store
+  title           String?
+  targetPrice     Decimal?       @db.Decimal(12, 2)
+  webhookUrl      String
+  lastPrice       Decimal?       @db.Decimal(12, 2)
+  lastCheckedAt   DateTime?
+  lastAlertSentAt DateTime?
+  lastError       String?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  priceHistory    PriceHistory[]
+}
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price     Decimal  @db.Decimal(12, 2)
+  available Boolean
+  scrapedAt DateTime @default(now())
+
+  @@index([productId, scrapedAt])
+}
